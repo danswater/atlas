@@ -99,18 +99,18 @@ server.register(require('hapi-async-handler'), function (err) {
 });
 
 // Setup JWT authentication
-server.register(require('hapi-auth-jwt2'), function (err) {
-    if (err) {
-        log.fatal(err, 'Unable to register JWT plugin');
-        process.exit(1);
-    } else {
-        server.auth.strategy('jwt', 'jwt', {
-            key: JWTAuthentication.getPrivateKey(),
-            validateFunc: JWTAuthentication.validate,
-            verifyOptions: {algorithms: ['HS256']}
-        });
-    }
-});
+server.register( require( 'hapi-auth-jwt2' ), function ( err ) {
+	if ( err ) {
+		log.fatal( err, 'Unable to register JWT plugin' );
+		process.exit( 1 );
+	} else {
+		server.auth.strategy( 'jwt', 'jwt', {
+			'key'           : JWTAuthentication.getPrivateKey(),
+			'validateFunc'  : JWTAuthentication.validate,
+			'verifyOptions' : { 'algorithms' : [ 'HS256' ] }
+		} );
+	}
+} );
 
 /**
  * Log server errors

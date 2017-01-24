@@ -4,7 +4,7 @@ export default {
     app: {
         host: '0.0.0.0',
         port: 8000,
-        jwtKey: process.env.JWT_KEY,
+        jwtKey: 'JBRJHRu21BGi/4MasM/KEolMRkB0/X9mibrN4USPWkk=',
         defaultCurrency: 'EUR'
     },
     database: {

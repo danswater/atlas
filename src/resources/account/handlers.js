@@ -19,12 +19,12 @@ import {AccountDetailsSerializer} from './serializers'
  */
 class AccountHandlers {
 
-    /**
-     * Return the user's account details
-     */
-    static async get(request, reply) {
-        return reply(await new AccountDetailsSerializer(request.auth.credentials).serialize());
-    }
+	/**
+	 * Return the user's account details
+	 */
+	static async get ( request, reply ) {
+		return reply( await new AccountDetailsSerializer( request.auth.credentials ).serialize() );
+	}
 
     /**
      * Update "blocks" of the account details
@@ -79,32 +79,32 @@ class AccountHandlers {
  */
 class AccountLoginHandlers {
 
-    /**
-     * Login user
-     */
-    static async post(request, reply) {
+	/**
+	* Login user
+	*/
+	static async post( request, reply ) {
 
-        // 1) Sanitize & validate data
-        request.payload.email = sanitizeEmailAddress(request.payload.email);
-        if (Joi.string().email().validate(request.payload.email).error) {
-            return reply(BadRequest.invalidParameters('payload', {'email': ['"email" must be a valid email']})).code(400);
-        }
+		// 1) Sanitize & validate data
+		request.payload.email = sanitizeEmailAddress( request.payload.email );
+		if ( Joi.string().email().validate( request.payload.email ).error ) {
+			return reply( BadRequest.invalidParameters( 'payload', { 'email': [ '"email" must be a valid email' ] } ) ).code( 400 );
+		}
 
-        // 2) Check if user with given email+password exists
-        let user = await User.getByEmailAndPassword(request.payload);
-        if (!user) {
-            return reply({message: 'Invalid credentials'}).code(400);
-        }
+		// 2) Check if user with given email+password exists
+		let user = await User.getByEmailAndPassword( request.payload );
+		if ( !user ) {
+			return reply( { 'message' : 'Invalid credentials' } ).code( 400 );
+		}
 
-        // 3) Check if account is active
-        if (user.status !== UserStatus.ACTIVE) {
-            log.warn({user}, 'Login attempt of disabled account');
-            return reply({message: 'Account is not active', status: user.status}).code(400);
-        }
+		// // 3) Check if account is active
+		// if ( user.status !== UserStatus.ACTIVE ) {
+		// 	log.warn( { user }, 'Login attempt of disabled account' );
+		// 	return reply( { 'message' : 'Account is not active', status: user.status } ).code( 400 );
+		// }
 
-        // 4) If this point is reached, then credentials are valid. Return auth token
-        return reply({authToken: JWT.sign({id: user.id}, JWTAuthentication.getPrivateKey())}).code(201);
-    }
+		// 4) If this point is reached, then credentials are valid. Return auth token
+		return reply( { 'authToken' : JWT.sign( { 'id' : user.id }, JWTAuthentication.getPrivateKey() ) } ).code( 201 );
+	}
 }
 
 /**
@@ -112,43 +112,44 @@ class AccountLoginHandlers {
  */
 class AccountRegisterHandlers {
 
-    /**
-     * Create new user account
-     */
-    static async post(request, reply) {
+	/**
+	 * Create new user account
+	 */
+	static async post( request, reply ) {
 
-        // 1) Sanitize data
-        request.payload.email = sanitizeEmailAddress(request.payload.email);
+		// 1) Sanitize data
+		request.payload.email = sanitizeEmailAddress( request.payload.email );
 
-        // 2) Validate payload data
-        if (Joi.string().email().validate(request.payload.email).error) {
-            return reply(BadRequest.invalidParameters('payload', {'email': ['"email" must be a valid email']})).code(400);
-        } else if (await User.getByEmail(request.payload.email)) {
-            return reply(BadRequest.invalidParameters('payload', {email: ['"email" is already registered']})).code(400);
-        }
+		// 2) Validate payload data
+		if ( Joi.string().email().validate( request.payload.email ).error ) {
+			return reply( BadRequest.invalidParameters( 'payload', { 'email': [ '"email" must be a valid email' ] } ) ).code( 400 );
+		} else if ( await User.getByEmail( request.payload.email ) ) {
+			return reply(BadRequest.invalidParameters('payload', { 'email' : [ '"email" is already registered' ] } ) ).code( 400 );
+		}
 
-        // 3) If everything checks, create a user account and return HTTP response immediately
-        let user = await User.create(request.payload);
-        reply().code(201);
+		// 3) If everything checks, create a user account and return HTTP response immediately
+		let user = await User.create( request.payload );
+		reply().code( 201 );
 
-        // 4) Create activation token and send respective email
-        try {
-            let activationToken = JWT.sign({
-                email: user.email,
-                token: await User.createConfirmationToken(user.id, ConfirmationToken.ACTIVATE_ACCOUNT)
-            }, JWTAuthentication.getPrivateKey());
-            sendEmailTemplate(EmailTemplate.ACCOUNT_CREATED, request.payload.email, {
-                name: user.name,
-                url: `${config.storefront.baseUrl}/${config.storefront.defaultLocale}/register/confirm/${activationToken}`
-            }).then(function () {
-                User.updateStatus(user.id, UserStatus.PENDING_CONFIRMATION);
-            }, function (err) {
-                log.error(err, 'Unable to send account confirmation email');
-            });
-        } catch (err) {
-            log.error(err, 'Unable to create activation token');
-        }
-    }
+		// 4) Create activation token and send respective email
+		try {
+			let activationToken = JWT.sign( {
+				'email' : user.email,
+				'token' : await User.createConfirmationToken( user.id, ConfirmationToken.ACTIVATE_ACCOUNT )
+			}, JWTAuthentication.getPrivateKey() );
+
+			// sendEmailTemplate( EmailTemplate.ACCOUNT_CREATED, request.payload.email, {
+			// 	'name' : user.name,
+			// 	'url'  : `${config.storefront.baseUrl}/${config.storefront.defaultLocale}/register/confirm/${activationToken}`
+			// } ).then(function () {
+			// 	User.updateStatus( user.id, UserStatus.PENDING_CONFIRMATION );
+			// }, function ( err ) {
+			// 	log.error( err, 'Unable to send account confirmation email' );
+			// } );
+		} catch ( err ) {
+			log.error( err, 'Unable to create activation token' );
+		}
+	}
 
     /**
      * Confirm email address
